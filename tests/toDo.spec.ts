@@ -1,51 +1,32 @@
-import { test, expect } from "@playwright/test";
+import { jira, test } from "../playwright.ts";
 import moment from "moment";
-import { ToDoPage } from "../pages/toDoPage";
-import { allure } from "allure-playwright";
 
-test("todo items flow", async ({ page }) => {
-  const toDoPage = new ToDoPage(page);
 
-  const firstToDoText = `TODO1 - ${moment().format("DD-MM-YYYY")}`;
-  const secondToDoText = `TODO2 - ${moment().add(1, "days").format("DD-MM-YYYY")}`;
+test.describe("ToDo List", jira('QA-1666'), () => {
+  test.beforeEach(async ({toDoSteps}) => {
+    await toDoSteps.navigateToUrl();
+  });
 
-  // Add Items
-  await toDoPage.goto();
-  await expect(page).toHaveURL(/\/examples\/react\/dist\//);
+  test("add item to todo list", async ({toDoSteps}) => {
+    const firstToDoText = `TODO1 - ${moment().format("DD-MM-YYYY")}`;
 
-  await toDoPage.addItem(firstToDoText);
+    await toDoSteps.addItem(firstToDoText);
+    await toDoSteps.expectItemToBeVisible(firstToDoText);
+  });
 
-  await expect(
-    toDoPage.listItem.filter({ hasText: firstToDoText })
-  ).toBeVisible();
+  test("check item in todo list", async ({toDoSteps}) => {
+    const firstToDoText = `TODO1 - ${moment().format("DD-MM-YYYY")}`;
 
-  allure.attachment("Add item", await page.screenshot(), "image/png");
+    await toDoSteps.addItem(firstToDoText);
+    await toDoSteps.checkItem(firstToDoText);
+    await toDoSteps.expectItemToBeChecked(firstToDoText);
+  });
 
-  await toDoPage.addItem(secondToDoText);
+  test("delete item from todo list", async ({toDoSteps}) => {
+    const firstToDoText = `TODO1 - ${moment().format("DD-MM-YYYY")}`;
 
-  // Check Item
-  await toDoPage.listItem
-    .filter({ hasText: firstToDoText })
-    .getByRole("checkbox")
-    .check();
-
-  await expect(page.getByText(firstToDoText)).toHaveCSS(
-    "text-decoration",
-    /line-through/
-  );
-
-  allure.attachment("Check item", await page.screenshot(), "image/png");
-
-  // Delete Item
-  await toDoPage.deleteItem(secondToDoText);
-
-  expect(
-    await toDoPage.listItem
-      .filter({
-        hasText: secondToDoText,
-      })
-      .count()
-  ).toBe(0);
-
-  allure.attachment("Delete item", await page.screenshot(), "image/png");
+    await toDoSteps.addItem(firstToDoText);
+    await toDoSteps.deleteItem(firstToDoText);
+    await toDoSteps.expectItemToBeDeleted(firstToDoText);
+  });
 });

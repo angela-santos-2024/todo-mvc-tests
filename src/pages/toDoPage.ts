@@ -1,4 +1,4 @@
-import { type Locator, type Page } from "@playwright/test";
+import { type Locator, type Page, expect } from "../../playwright";
 
 export class ToDoPage {
   readonly page: Page;
@@ -13,6 +13,8 @@ export class ToDoPage {
     this.checkbox = this.page.getByRole("checkbox");
   }
 
+  //Actions
+
   async goto() {
     await this.page.goto("/examples/react/dist");
   }
@@ -20,6 +22,10 @@ export class ToDoPage {
   async addItem(text: string) {
     await this.todoInput.fill(text);
     await this.todoInput.press("Enter");
+  }
+
+  async checkItem(text: string) {
+    await this.page.getByText(text).check();
   }
 
   async deleteItem(text: string) {
@@ -35,5 +41,33 @@ export class ToDoPage {
       })
       .getByRole("button")
       .click();
+  }
+
+  //Assertions
+  async expectCorrectUrl() {
+    await expect(this.page).toHaveURL(/\/examples\/react\/dist\//);
+  }
+
+  async expectItemVisible(text: string) {
+    await expect(
+      this.listItem.filter({ hasText: text })
+    ).toBeVisible();
+  }
+
+  async expectItemChecked(text: string) {
+    await expect(this.page.getByText(text)).toHaveCSS(
+      "text-decoration",
+      /line-through/
+    );
+  }
+
+  async expectItemDeleted(text: string) {
+    expect(
+      await this.listItem
+        .filter({
+          hasText: text,
+        })
+        .count()
+    ).toBe(0);
   }
 }
